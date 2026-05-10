@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>TARTULUS_SVRN_V9_QUAD_SYNTH</title>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --panel-color: #050505;
+            --text-pure-white: #ffffff;
+            --alert-red: #cc0000;
+            --border-heavy: #222222;
+        }
+
+        body { 
+            background: var(--bg-color); 
+            color: var(--text-pure-white); 
+            font-family: 'Consolas', 'Courier New', monospace; 
+            margin: 0; 
+            height: 100vh; 
+            display: grid; 
+            grid-template-rows: 120px 1fr 140px;
+            overflow: hidden;
+        }
+
+        header {
+            border-bottom: 2px solid var(--border-heavy);
+            display: grid; grid-template-columns: 1fr 1fr;
+            padding: 15px 30px; background: var(--panel-color);
+            font-size: 11px; line-height: 1.6; letter-spacing: 2px;
+        }
+
+        .title-main { font-size: 18px; letter-spacing: 12px; font-weight: bold; margin-bottom: 5px; }
+
+        main { display: grid; grid-template-columns: 3fr 1.2fr; overflow: hidden; }
+
+        #terminal {
+            padding: 50px; font-size: 18px; line-height: 1.6;
+            overflow-y: auto; white-space: pre-wrap;
+            border-right: 2px solid var(--border-heavy);
+            background: radial-gradient(circle at 50% 50%, #080808 0%, #000000 100%);
+            scrollbar-width: none; word-break: break-all;
+        }
+
+        /* 恢復最早版本的日誌視覺 */
+        #log-sidebar {
+            background: var(--panel-color); padding: 30px; font-size: 14px;
+            overflow-y: auto; border-left: 1px solid var(--border-heavy);
+        }
+
+        .log-entry {
+            border-bottom: 1px solid #222;
+            padding: 12px 0;
+            animation: slideIn 0.2s ease-out;
+        }
+
+        .lang-jp { color: #fff; font-weight: bold; display: block; margin-bottom: 4px; }
+        .lang-en { color: #7a8a7a; font-style: italic; display: block; font-size: 12px; }
+
+        footer {
+            border-top: 2px solid var(--border-heavy);
+            display: flex; align-items: center; justify-content: center; gap: 80px; background: #000;
+        }
+
+        button {
+            background: #000; border: 2px solid var(--text-pure-white); color: var(--text-pure-white);
+            padding: 22px 80px; cursor: pointer; text-transform: uppercase; font-weight: bold; letter-spacing: 4px; transition: 0.2s;
+        }
+
+        button:hover { background: var(--text-pure-white); color: #000; box-shadow: 0 0 30px rgba(255, 255, 255, 0.5); }
+
+        .holding { background: var(--alert-red) !important; border-color: #ff0000 !important; animation: blink 0.5s infinite alternate; }
+        @keyframes blink { from { opacity: 1; } to { opacity: 0.6; } }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="left-zone">
+        <div class="title-main">TARTULUS_PROTOCOL</div>
+        <div>AUDIO_ENGINE: <span style="color:white">QUAD_CHANNEL_SYNTH</span></div>
+        <div>MODE: <span style="color:white">LOCAL_STATION_BETA</span></div>
+    </div>
+    <div class="right-zone" style="text-align: right; color: #555;">
+        <div>BPM: 171 // SYNC: 350MS</div>
+        <div>OSC: [LOW, SEQ, PERC, NOISE]</div>
+        <div>[[ ⧓ ]] SYSTEM_SVRN</div>
+    </div>
+</header>
+
+<main>
+    <div id="terminal">>> SYSTEM_READY.
+>> QUAD-SYNTH ENGINE ENGAGED.
+>> HOLD TO START THE RITUAL.</div>
+    <div id="log-sidebar"></div>
+</main>
+
+<footer>
+    <button id="btn-submit">Submit Pulse</button>
+    <button id="btn-hold">Hold Resonance</button>
+</footer>
+
+<script>
+    const terminal = document.getElementById('terminal');
+    const logSidebar = document.getElementById('log-sidebar');
+    const btnSubmit = document.getElementById('btn-submit');
+    const btnHold = document.getElementById('btn-hold');
+
+    let isHolding = false;
+    let holdTimer = null;
+    let audioCtx = null;
+    let masterGain = null;
+
+    const rawChars = "⟦Ξ∞ΣΩₙ⇅μ₀ϟ∿∂⊗⊣Θ⧓œ∑´®¥¨ˆøπåß∂ƒ©˙∆˚¬…æΩç√∫˜µ≤≥÷¿˘¯Â˜ı◊Ç˛¸ÅÍÎÏ˝∏Øˆ¨Áˇ‰´„Œあ코死気まひくりセク岸".split("");
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            masterGain = audioCtx.createGain();
+            masterGain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            masterGain.connect(audioCtx.destination);
+        }
+    }
+
+    // 四通道電子音樂合成邏輯
+    function playQuadSynth(step) {
+        initAudio();
+        const now = audioCtx.currentTime;
+
+        // Channel 1: Kick (每兩次觸發一次)
+        if (step % 2 === 0) {
+            const kick = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            kick.frequency.setValueAtTime(120, now);
+            kick.frequency.exponentialRampToValueAtTime(0.01, now + 0.2);
+            g.gain.setValueAtTime(0.6, now);
+            g.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+            kick.connect(g); g.connect(masterGain);
+            kick.start(); kick.stop(now + 0.2);
+        }
+
+        // Channel 2: Acid Sequence (隨機音階)
+        const seq = audioCtx.createOscillator();
+        const gSeq = audioCtx.createGain();
+        const filter = audioCtx.createBiquadFilter();
+        const freqs = [110, 146, 164, 196, 220]; // Pentatonic minor
+        seq.type = 'sawtooth';
+        seq.frequency.setValueAtTime(freqs[Math.floor(Math.random() * freqs.length)], now);
+        filter.type = 'lowpass';
+        filter.frequency.value = 800 + Math.random() * 1000;
+        gSeq.gain.setValueAtTime(0.1, now);
+        gSeq.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        seq.connect(filter); filter.connect(gSeq); gSeq.connect(masterGain);
+        seq.start(); seq.stop(now + 0.3);
+
+        // Channel 3: Hi-hat/Perc (高頻)
+        const noise = audioCtx.createBufferSource();
+        const b = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.05, audioCtx.sampleRate);
+        const d = b.getChannelData(0);
+        for(let i=0; i<d.length; i++) d[i] = Math.random() * 2 - 1;
+        noise.buffer = b;
+        const gN = audioCtx.createGain();
+        gN.gain.setValueAtTime(0.05, now);
+        gN.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+        noise.connect(gN); gN.connect(masterGain);
+        noise.start();
+    }
+
+    function generateStr() {
+        let length = Math.floor(Math.random() * 80) + 40; 
+        let s = "";
+        for(let i=0; i<length; i++) {
+            s += rawChars[Math.floor(Math.random() * rawChars.length)];
+            if(Math.random() > 0.93) s += " ";
+        }
+        return s;
+    }
+
+    // 恢復最早版本的日誌文字內容
+    function addLog() {
+        const logs = [
+            {jp: "API通信開始：ノードへの干預", en: "Initiating API handshake: Node intervention..."},
+            {jp: "出力完了：主権的ノイズ", en: "Output synchronized: Sovereign Noise generated."},
+            {jp: "共鳴ホールド：無限循環開始", en: "Resonance Hold: Infinite cycle active."},
+            {jp: "循環停止：熱寂に帰還", en: "Cycle terminated: Returning to heat death."}
+        ];
+        const log = logs[Math.floor(Math.random() * logs.length)];
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.innerHTML = `<span class="lang-jp">${log.jp}</span><span class="lang-en">${log.en}</span>`;
+        logSidebar.prepend(entry);
+        if(logSidebar.childNodes.length > 12) logSidebar.lastChild.remove();
+    }
+
+    let stepCounter = 0;
+    function trigger() {
+        const content = generateStr();
+        const line = document.createElement('div');
+        line.style.marginBottom = "15px";
+        line.innerText = content;
+        terminal.appendChild(line);
+        terminal.scrollTop = terminal.scrollHeight;
+        
+        playQuadSynth(stepCounter++);
+        addLog();
+    }
+
+    btnSubmit.onclick = () => { if(!isHolding) trigger(); };
+    btnHold.onclick = () => {
+        isHolding = !isHolding;
+        if (isHolding) {
+            btnHold.classList.add('holding');
+            holdTimer = setInterval(trigger, 350); 
+        } else {
+            btnHold.classList.remove('holding');
+            clearInterval(holdTimer);
+        }
+    };
+</script>
+</body>
+</html>
